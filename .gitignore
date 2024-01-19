@@ -8,3 +8,5 @@ reporter_files
 node_modules
 listeners.json
 wordsToLookFor.json
+*.exe
+*.bat
