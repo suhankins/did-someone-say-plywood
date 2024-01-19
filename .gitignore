@@ -7,4 +7,4 @@ reporter_files
 .env
 node_modules
 listeners.json
-wordsToListenTo.json
+wordsToLookFor.json
