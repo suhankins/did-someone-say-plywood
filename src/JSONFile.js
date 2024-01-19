@@ -44,7 +44,6 @@ export default class JSONFile {
      * @private
      */
     async writeFile() {
-        console.log(this.filepath, JSON.stringify(this._contents));
         await writeFileAsync(this.filepath, JSON.stringify(this._contents));
     }
 
