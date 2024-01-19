@@ -3,6 +3,9 @@
 Telegram bot made for my parents that notifies you if in any of
 the chats you are in, someone sent a message that contains some keywords.
 
+> [!NOTE]
+> All messages are in Russian. 
+
 ## Setup
 
 This isn't actually a bot, but rather a very Telegram client and a bot.
