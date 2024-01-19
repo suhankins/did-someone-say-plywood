@@ -1,0 +1,10 @@
+_td_database
+_td_files
+observer_db
+observer_files
+reporter_db
+reporter_files
+.env
+node_modules
+listeners.json
+wordsToListenTo.json
