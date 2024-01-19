@@ -1,6 +1,5 @@
 import * as tdl from 'tdl';
 import { listeners } from './FileManager.js';
-import sendTextMessage from './utils/sendMessage.js';
 
 export default class Reporter {
     /**
@@ -38,7 +37,7 @@ export default class Reporter {
             if (update._ !== 'updateNewMessage') return;
             const message = update.message;
             if (this.isListener(message.chat_id)) {
-                this.handleListener(message);
+                await this.handleListener(message);
             } else {
                 await this.handleNonListener(message);
             }
@@ -52,7 +51,7 @@ export default class Reporter {
         return listeners.contents.includes(chatId);
     }
 
-    handleListener() {
+    async handleListener() {
         // TODO: Implement
     }
 
@@ -64,17 +63,27 @@ export default class Reporter {
         const text = message.content.text.text;
         if (!!text.match(this.password)) {
             listeners.setContents([...listeners.contents, message.chat_id]);
-            await sendTextMessage(
-                this.client,
-                message.chat_id,
-                'Пароль правильный!'
-            );
+            await this.sendTextMessage(message.chat_id, 'Пароль правильный!');
         } else {
-            await sendTextMessage(
-                this.client,
-                message.chat_id,
-                'Неправильный пароль.'
-            );
+            await this.sendTextMessage(message.chat_id, 'Неправильный пароль.');
         }
+    }
+
+    /**
+     * @param {number} chatId
+     * @param {string} text
+     */
+    async sendTextMessage(chatId, text) {
+        await this.client.invoke({
+            _: 'sendMessage',
+            chat_id: chatId,
+            input_message_content: {
+                _: 'inputMessageText',
+                text: {
+                    _: 'formattedText',
+                    text: text,
+                },
+            },
+        });
     }
 }
