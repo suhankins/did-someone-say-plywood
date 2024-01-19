@@ -9,19 +9,18 @@ export default class JSONFile {
     filepath;
     /**
      * @private
-     * @type {Array}
-     */
-    _contents;
-    /**
-     * @private
      * @type {Promise}
      */
     writingFilePromise = new Promise((resolve) => resolve());
 
+    /**
+     * @private
+     * @type {Array}
+     */
+    _contents;
     get contents() {
         return this._contents;
     }
-
     /**
      * @param {Array} contents
      */
