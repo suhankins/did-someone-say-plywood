@@ -3,13 +3,18 @@ import { listeners } from './FileManager.js';
 import createListener from './Listener/createListener.js';
 import Keyboard from './Keyboard.js';
 import Commands, { getCommandByText } from './Commands.js';
+import getListener from './utils/getListener.js';
 
 /**
  * @typedef {import('./Listener/createListener.js').Listener} Listener
  */
 
 /**
- * @typedef {{id: number, chat_id: number, content: { _: string, text: { text: string }}}} Message
+ * @typedef {import('./types/Message.js').Message} Message
+ */
+
+/**
+ * @typedef {import('./types/Update.js').Update} Update
  */
 
 export default class Reporter {
@@ -44,24 +49,22 @@ export default class Reporter {
     async main() {
         await this.client.loginAsBot(this.token);
 
-        this.client.on('update', async (update) => {
-            if (update._ !== 'updateNewMessage') return;
-            const message = update.message;
-            const listener = this.getListener(message.chat_id);
-            if (!!listener) {
-                await this.handleListener(message, listener);
-            } else {
-                await this.handleNonListener(message);
+        this.client.on(
+            'update',
+            /**
+             * @param {Update} update
+             */
+            async (update) => {
+                if (update._ !== 'updateNewMessage') return;
+                const message = update.message;
+                const listener = getListener(message.chat_id);
+                if (!!listener) {
+                    await this.handleListener(message, listener);
+                } else {
+                    await this.handleNonListener(message);
+                }
             }
-        });
-    }
-
-    /**
-     * @param {number} chatId
-     * @returns {Listener|null}
-     */
-    getListener(chatId) {
-        return listeners.contents.find((user) => user.chatId === chatId);
+        );
     }
 
     /**
@@ -74,7 +77,9 @@ export default class Reporter {
         if (requestedCommand) {
             requestedCommand.callback(this, message, listener);
         } else {
-            Commands[listener.state].defaultCallback(this, message, listener).catch((err) => console.error(err));
+            Commands[listener.state]
+                .defaultCallback(this, message, listener)
+                .catch((err) => console.error(err));
         }
     }
 

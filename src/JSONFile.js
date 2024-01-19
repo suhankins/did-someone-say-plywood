@@ -38,7 +38,7 @@ export default class JSONFile {
             this._contents = JSON.parse(
                 existsSync(this.filepath) ? readFileSync(this.filepath) : '[]'
             );
-        } catch(error) {
+        } catch (error) {
             this._contents = [];
         }
     }

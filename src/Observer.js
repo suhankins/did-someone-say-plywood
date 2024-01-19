@@ -1,5 +1,15 @@
 import * as tdl from 'tdl';
 import { wordsToLookFor } from './FileManager.js';
+import getListener from './utils/getListener.js';
+import isBot from './utils/isBot.js';
+
+/**
+ * @typedef {import('./types/Update.js').Update} Update
+ */
+
+/**
+ * @typedef {import('./types/User.js').User} User
+ */
 
 export default class Observer {
     /**
@@ -31,7 +41,7 @@ export default class Observer {
      * @private
      */
     async getChatName(chatId) {
-        return await client
+        return await this.client
             .invoke({
                 _: 'getChat',
                 chat_id: chatId,
@@ -47,7 +57,7 @@ export default class Observer {
      * @private
      */
     async getMessageLink(chatId, messageId) {
-        return await client
+        return await this.client
             .invoke({
                 _: 'getMessageLink',
                 chat_id: chatId,
@@ -57,24 +67,53 @@ export default class Observer {
             .catch(() => 'Не получилось получить ссылку');
     }
 
+    /**
+     * @param {number} userId
+     * @returns {Promise<User>}
+     * @private
+     */
+    async getUser(userId) {
+        return await this.client
+            .invoke({
+                _: 'getUser',
+                user_id: userId,
+            })
+            .catch(() => 'Не получилось получить имя пользователя');
+    }
+
     async main() {
         await this.client.login();
 
-        this.client.on('update', async (update) => {
-            if (update._ !== 'updateChatLastMessage' || !update.last_message)
-                return;
-            const lastMessage = update.last_message;
-            if (!lastMessage.content || lastMessage.content._ !== 'messageText')
-                return;
-
+        this.client.on(
+            'update',
             /**
-             * @type {string}
+             * @param {Update} update
              */
-            const messageContent = lastMessage.content.text.text;
-            if (!this.messageContainsRequiredWord(messageContent)) return;
+            async (update) => {
+                if (update._ !== 'updateChatLastMessage') return;
+                const lastMessage = update.last_message;
+                if (
+                    !lastMessage.content ||
+                    lastMessage.content._ !== 'messageText'
+                )
+                    return;
 
-            const link = await this.getMessageLink(chatId, lastMessage.id);
-            const chatName = await this.getChatName(chatId);
-        });
+                const chatId = lastMessage.chat_id;
+                if (!!getListener(chatId)) return;
+
+                const userId = lastMessage.sender_id.user_id;
+                if (!!getListener(userId)) return;
+
+                const user = await this.getUser(userId);
+                if (isBot(user)) return;
+
+                const messageContent = lastMessage.content.text.text;
+                if (!this.messageContainsRequiredWord(messageContent)) return;
+
+                const username = `${user.first_name} ${user.last_name}`;
+                const link = await this.getMessageLink(chatId, lastMessage.id);
+                const chatName = await this.getChatName(chatId);
+            }
+        );
     }
 }

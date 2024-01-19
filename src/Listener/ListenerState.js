@@ -6,6 +6,6 @@ const ListenerState = {
     default: 'default',
     addWord: 'addWord',
     listAll: 'listAll',
-    unsubscribed: 'unsubscribed'
+    unsubscribed: 'unsubscribed',
 };
 export default ListenerState;

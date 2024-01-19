@@ -17,16 +17,19 @@ function createTextButton(text) {
  * @param {ListenerState} state
  */
 function createSimpleKeyboardForState(state) {
-    return Commands[state].commands.map((command) => [
-        createTextButton(command.text),
-    ]);
+    return {
+        _: 'replyMarkupShowKeyboard',
+        rows: Commands[state].commands.map((command) => [
+            createTextButton(command.text),
+        ]),
+    };
 }
 
 const Keyboard = {
-    [ListenerState.default]: () => ({
-        _: 'replyMarkupShowKeyboard',
-        rows: createSimpleKeyboardForState(ListenerState.default),
-    }),
+    [ListenerState.default]: () =>
+        createSimpleKeyboardForState(ListenerState.default),
+    [ListenerState.addWord]: () =>
+        createSimpleKeyboardForState(ListenerState.addWord),
     [ListenerState.unsubscribed]: () => ({
         _: 'replyMarkupRemoveKeyboard',
     }),

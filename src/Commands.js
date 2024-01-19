@@ -1,4 +1,4 @@
-import { listeners } from './FileManager.js';
+import { listeners, wordsToLookFor } from './FileManager.js';
 import ListenerState from './Listener/ListenerState.js';
 import {
     getArrayWithReplacedItem,
@@ -6,17 +6,28 @@ import {
 } from './utils/arrayUtils.js';
 
 /**
- * @typedef {import('./Listener/createListener.js').Listener} Listener
+ * @typedef {import('./types/Listener.js').Listener} Listener
  */
 /**
  * @typedef {import('./Reporter.js').default} Reporter
  */
 /**
- * @typedef {import('./Reporter.js').Message} Message
+ * @typedef {import('./types/Message.js').Message} Message
  */
 /**
  * @typedef {(reporter: Reporter, message: Message, listener: Listener) => Promise<void>} CommandCallback
  */
+
+function switchListenerState(listener, state) {
+    const newListener = {
+        ...listener,
+        state,
+    };
+    listeners.setContents(
+        getArrayWithReplacedItem(listeners.contents, listener, newListener)
+    );
+    return newListener;
+}
 
 const Commands = {
     [ListenerState.default]: {
@@ -34,16 +45,9 @@ const Commands = {
                  * @type CommandCallback
                  */
                 callback: async (reporter, message, listener) => {
-                    const newListener = {
-                        ...listener,
-                        state: ListenerState.addWord,
-                    };
-                    listeners.setContents(
-                        getArrayWithReplacedItem(
-                            listeners.contents,
-                            listener,
-                            newListener
-                        )
+                    const newListener = switchListenerState(
+                        listener,
+                        ListenerState.addWord
                     );
                     await reporter.replyWithKeyboard(
                         newListener,
@@ -88,10 +92,38 @@ const Commands = {
         commands: [
             {
                 text: 'Отменить',
-                callback: async (reporter, message, listener) => {},
+                /**
+                 * @type CommandCallback
+                 */
+                callback: async (reporter, message, listener) => {
+                    const newListener = switchListenerState(
+                        listener,
+                        ListenerState.default
+                    );
+                    await reporter.replyWithKeyboard(
+                        newListener,
+                        message.id,
+                        'Ввод отменен.'
+                    );
+                },
             },
         ],
-        defaultCallback: async (reporter, message, listener) => {},
+        /**
+         * @type CommandCallback
+         */
+        defaultCallback: async (reporter, message, listener) => {
+            const newWord = message.content.text.text;
+            wordsToLookFor.setContents([...wordsToLookFor.contents, newWord]);
+            const newListener = switchListenerState(
+                listener,
+                ListenerState.default
+            );
+            await reporter.replyWithKeyboard(
+                newListener,
+                message.id,
+                `Слово "${newWord}" успешно добавлено!`
+            );
+        },
     },
     [ListenerState.listAll]: {
         commands: [],
