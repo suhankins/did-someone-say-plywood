@@ -95,13 +95,8 @@ export default class Observer {
              * @param {Update} update
              */
             async (update) => {
-                if (update._ !== 'updateChatLastMessage') return;
-                const lastMessage = update.last_message;
-                if (
-                    !lastMessage.content ||
-                    lastMessage.content._ !== 'messageText'
-                )
-                    return;
+                if (update._ !== 'updateNewMessage') return;
+                const lastMessage = update.message;
 
                 const chatId = lastMessage.chat_id;
                 if (!!getListener(chatId)) return;
