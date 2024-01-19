@@ -57,6 +57,7 @@ export default class Reporter {
             async (update) => {
                 if (update._ !== 'updateNewMessage') return;
                 const message = update.message;
+                if (update.message.is_outgoing) return;
                 const listener = getListener(message.chat_id);
                 if (!!listener) {
                     await this.handleListener(message, listener);
