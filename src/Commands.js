@@ -18,6 +18,11 @@ import {
  * @typedef {(reporter: Reporter, message: Message, listener: Listener) => Promise<void>} CommandCallback
  */
 
+/**
+ * @param {Listener} listener
+ * @param {ListenerState} state
+ * @returns {Listener}
+ */
 function switchListenerState(listener, state) {
     const newListener = {
         ...listener,
@@ -37,7 +42,19 @@ const Commands = {
                 /**
                  * @type CommandCallback
                  */
-                callback: async (reporter, message, listener) => {},
+                callback: async (reporter, message, listener) => {
+                    const newListener = switchListenerState(
+                        listener,
+                        ListenerState.listAll
+                    );
+                    await reporter
+                        .replyWithKeyboard(
+                            newListener,
+                            message.id,
+                            'Нажмите на слово, чтобы его удалить.'
+                        )
+                        .catch((err) => console.error(err));
+                },
             },
             {
                 text: 'Добавить слово',
@@ -126,8 +143,51 @@ const Commands = {
         },
     },
     [ListenerState.listAll]: {
-        commands: [],
-        defaultCallback: async (reporter, message, listener) => {},
+        commands: [
+            {
+                text: '↩️ Назад',
+                /**
+                 * @type CommandCallback
+                 */
+                callback: async (reporter, message, listener) => {
+                    const newListener = switchListenerState(
+                        listener,
+                        ListenerState.default
+                    );
+                    await reporter.replyWithKeyboard(
+                        newListener,
+                        message.id,
+                        'Возращаемся назад'
+                    );
+                },
+            },
+        ],
+        /**
+         * @type CommandCallback
+         */
+        defaultCallback: async (reporter, message, listener) => {
+            const word = message.content.text.text;
+            const wordIndex = wordsToLookFor.contents.findIndex(
+                (value) => value === word
+            );
+            if (wordIndex === -1) {
+                await reporter.replyWithKeyboard(
+                    listener,
+                    message.id,
+                    'Слово не найдено!'
+                );
+                return;
+            }
+
+            wordsToLookFor.setContents(
+                wordsToLookFor.contents.toSpliced(wordIndex, 1)
+            );
+            await reporter.replyWithKeyboard(
+                listener,
+                message.id,
+                `Слово "${word}" успешно удалено.`
+            );
+        },
     },
 };
 export default Commands;
