@@ -34,9 +34,13 @@ export default class JSONFile {
      * @private
      */
     readFile() {
-        this._contents = JSON.parse(
-            existsSync(this.filepath) ? readFileSync(this.filepath) : '[]'
-        );
+        try {
+            this._contents = JSON.parse(
+                existsSync(this.filepath) ? readFileSync(this.filepath) : '[]'
+            );
+        } catch(error) {
+            this._contents = [];
+        }
     }
 
     /**
