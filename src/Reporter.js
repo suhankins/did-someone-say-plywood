@@ -127,18 +127,20 @@ export default class Reporter {
      * @param {string} text
      */
     async replyWithKeyboard(listener, messageId, text) {
-        await this.client.invoke({
-            _: 'sendMessage',
-            chat_id: listener.chatId,
-            reply_to_message_id: messageId,
-            input_message_content: {
-                _: 'inputMessageText',
-                text: {
-                    _: 'formattedText',
-                    text: text,
+        await this.client
+            .invoke({
+                _: 'sendMessage',
+                chat_id: listener.chatId,
+                reply_to_message_id: messageId,
+                input_message_content: {
+                    _: 'inputMessageText',
+                    text: {
+                        _: 'formattedText',
+                        text: text,
+                    },
                 },
-            },
-            reply_markup: Keyboard[listener.state](),
-        });
+                reply_markup: Keyboard[listener.state](),
+            })
+            .catch((err) => console.error(err));
     }
 }
