@@ -34,6 +34,24 @@ function switchListenerState(listener, state) {
     return newListener;
 }
 
+/**
+ * @param {Reporter} reporter
+ * @param {Listener} listener
+ * @param {Message} message
+ * @param {ListenerState} state
+ * @param {string} text
+ */
+async function switchStateAndReplyWithKeyboard(
+    reporter,
+    listener,
+    message,
+    state,
+    text
+) {
+    const newListener = switchListenerState(listener, state);
+    await reporter.replyWithKeyboard(newListener, message.id, text);
+}
+
 const Commands = {
     [ListenerState.default]: {
         commands: [
@@ -43,17 +61,13 @@ const Commands = {
                  * @type CommandCallback
                  */
                 callback: async (reporter, message, listener) => {
-                    const newListener = switchListenerState(
+                    await switchStateAndReplyWithKeyboard(
+                        reporter,
                         listener,
-                        ListenerState.listAll
+                        message,
+                        ListenerState.listAll,
+                        'Нажмите на слово, чтобы его удалить.'
                     );
-                    await reporter
-                        .replyWithKeyboard(
-                            newListener,
-                            message.id,
-                            'Нажмите на слово, чтобы его удалить.'
-                        )
-                        .catch((err) => console.error(err));
                 },
             },
             {
@@ -62,13 +76,11 @@ const Commands = {
                  * @type CommandCallback
                  */
                 callback: async (reporter, message, listener) => {
-                    const newListener = switchListenerState(
+                    await switchStateAndReplyWithKeyboard(
+                        reporter,
                         listener,
-                        ListenerState.addWord
-                    );
-                    await reporter.replyWithKeyboard(
-                        newListener,
-                        message.id,
+                        message,
+                        ListenerState.addWord,
                         'Введите слово (или регулярное выражение)'
                     );
                 },
@@ -113,13 +125,11 @@ const Commands = {
                  * @type CommandCallback
                  */
                 callback: async (reporter, message, listener) => {
-                    const newListener = switchListenerState(
+                    await switchStateAndReplyWithKeyboard(
+                        reporter,
                         listener,
-                        ListenerState.default
-                    );
-                    await reporter.replyWithKeyboard(
-                        newListener,
-                        message.id,
+                        message,
+                        ListenerState.default,
                         'Ввод отменен.'
                     );
                 },
@@ -131,13 +141,11 @@ const Commands = {
         defaultCallback: async (reporter, message, listener) => {
             const newWord = message.content.text.text;
             wordsToLookFor.setContents([...wordsToLookFor.contents, newWord]);
-            const newListener = switchListenerState(
+            await switchStateAndReplyWithKeyboard(
+                reporter,
                 listener,
-                ListenerState.default
-            );
-            await reporter.replyWithKeyboard(
-                newListener,
-                message.id,
+                message,
+                ListenerState.default,
                 `Слово "${newWord}" успешно добавлено!`
             );
         },
@@ -150,13 +158,11 @@ const Commands = {
                  * @type CommandCallback
                  */
                 callback: async (reporter, message, listener) => {
-                    const newListener = switchListenerState(
+                    await switchStateAndReplyWithKeyboard(
+                        reporter,
                         listener,
-                        ListenerState.default
-                    );
-                    await reporter.replyWithKeyboard(
-                        newListener,
-                        message.id,
+                        message,
+                        ListenerState.default,
                         'Возращаемся назад'
                     );
                 },
