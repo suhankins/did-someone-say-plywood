@@ -69,7 +69,7 @@ export default class Observer {
 
     /**
      * @param {number} userId
-     * @returns {Promise<User>}
+     * @returns {Promise<User> | undefined}
      * @private
      */
     async getUser(userId) {
@@ -78,7 +78,12 @@ export default class Observer {
                 _: 'getUser',
                 user_id: userId,
             })
-            .catch(() => 'Не получилось получить имя пользователя');
+            .catch(() => ({
+                id: 0,
+                first_name: 'Не получилось получить имя пользователя',
+                last_name: '',
+                type: { _: '' },
+            }));
     }
 
     async main() {
@@ -105,7 +110,7 @@ export default class Observer {
                 if (!!getListener(userId)) return;
 
                 const user = await this.getUser(userId);
-                if (isBot(user)) return;
+                if (!user || isBot(user)) return;
 
                 const messageContent = lastMessage.content.text.text;
                 if (!this.messageContainsRequiredWord(messageContent)) return;
@@ -113,6 +118,13 @@ export default class Observer {
                 const username = `${user.first_name} ${user.last_name}`;
                 const link = await this.getMessageLink(chatId, lastMessage.id);
                 const chatName = await this.getChatName(chatId);
+
+                console.log({
+                    chatName,
+                    username,
+                    messageContent,
+                    link
+                })
             }
         );
     }
