@@ -25,6 +25,38 @@ export default class Observer {
         this.client = tdl.createClient(clientOptions);
     }
 
+    /**
+     * @param {number} chatId
+     * @returns {Promise<string>}
+     * @private
+     */
+    async getChatName(chatId) {
+        return await client
+            .invoke({
+                _: 'getChat',
+                chat_id: chatId,
+            })
+            .then((chatObject) => chatObject.title)
+            .catch(() => 'Не получилось получить название чата');
+    }
+
+    /**
+     * @param {number} chatId
+     * @param {number} messageId
+     * @returns {Promise<string>}
+     * @private
+     */
+    async getMessageLink(chatId, messageId) {
+        return await client
+            .invoke({
+                _: 'getMessageLink',
+                chat_id: chatId,
+                message_id: messageId,
+            })
+            .then((linkObject) => linkObject.link)
+            .catch(() => 'Не получилось получить ссылку');
+    }
+
     async main() {
         await this.client.login();
 
@@ -41,27 +73,8 @@ export default class Observer {
             const messageContent = lastMessage.content.text.text;
             if (!this.messageContainsRequiredWord(messageContent)) return;
 
-            /**
-             * @type {string}
-             */
-            const link = await client
-                .invoke({
-                    _: 'getMessageLink',
-                    chat_id: lastMessage.chat_id,
-                    message_id: lastMessage.id,
-                })
-                .then((linkObject) => linkObject.link)
-                .catch(() => 'Не получилось получить ссылку');
-            /**
-             * @type {string}
-             */
-            const chatName = await client
-                .invoke({
-                    _: 'getChat',
-                    chat_id: lastMessage.chat_id,
-                })
-                .then((chatObject) => chatObject.title)
-                .catch(() => 'Не получилось получить название чата');
+            const link = await this.getMessageLink(chatId, lastMessage.id);
+            const chatName = await this.getChatName(chatId);
         });
     }
 }
