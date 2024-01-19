@@ -1,5 +1,10 @@
 import * as tdl from 'tdl';
 import { listeners } from './FileManager.js';
+import createListener from './Listener/createListener.js';
+
+/**
+ * @typedef {import('./Listener/createListener.js').Listener} Listener
+ */
 
 export default class Reporter {
     /**
@@ -36,8 +41,9 @@ export default class Reporter {
         this.client.on('update', async (update) => {
             if (update._ !== 'updateNewMessage') return;
             const message = update.message;
-            if (this.isListener(message.chat_id)) {
-                await this.handleListener(message);
+            const listener = this.getListener(message.chat_id);
+            if (!!listener) {
+                await this.handleListener(message, listener);
             } else {
                 await this.handleNonListener(message);
             }
@@ -46,12 +52,17 @@ export default class Reporter {
 
     /**
      * @param {number} chatId
+     * @returns {Listener|null}
      */
-    isListener(chatId) {
-        return listeners.contents.includes(chatId);
+    getListener(chatId) {
+        return listeners.contents.find((user) => user.chatId === chatId);
     }
 
-    async handleListener() {
+    /**
+     * @param {*} message
+     * @param {Listener} listener
+     */
+    async handleListener(message, listener) {
         // TODO: Implement
     }
 
@@ -61,11 +72,15 @@ export default class Reporter {
     async handleNonListener(message) {
         if (message.content._ !== 'messageText') return;
         const text = message.content.text.text;
+        const chatId = message.chat_id;
         if (!!text.match(this.password)) {
-            listeners.setContents([...listeners.contents, message.chat_id]);
-            await this.sendTextMessage(message.chat_id, 'Пароль правильный!');
+            listeners.setContents([
+                ...listeners.contents,
+                createListener(chatId),
+            ]);
+            await this.sendTextMessage(chatId, 'Пароль правильный!');
         } else {
-            await this.sendTextMessage(message.chat_id, 'Неправильный пароль.');
+            await this.sendTextMessage(chatId, 'Неправильный пароль.');
         }
     }
 
