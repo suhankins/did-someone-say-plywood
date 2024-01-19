@@ -1,7 +1,7 @@
 import * as tdl from 'tdl';
 import { getTdjson } from 'prebuilt-tdlib';
-import Observer from './observer.js';
-import Reporter from './reporter.js';
+import Observer from './Observer.js';
+import Reporter from './Reporter.js';
 
 tdl.configure({ tdjson: getTdjson() });
 
