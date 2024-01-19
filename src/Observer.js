@@ -1,7 +1,8 @@
 import * as tdl from 'tdl';
-import { wordsToLookFor } from './FileManager.js';
+import { listeners, wordsToLookFor } from './FileManager.js';
 import getListener from './utils/getListener.js';
 import isBot from './utils/isBot.js';
+import sendMessage from './utils/sendMessage.js';
 
 /**
  * @typedef {import('./types/Update.js').Update} Update
@@ -107,19 +108,28 @@ export default class Observer {
                 const user = await this.getUser(userId);
                 if (!user || isBot(user)) return;
 
-                const messageContent = lastMessage.content.text.text;
+                let messageContent = '';
+
+                if (lastMessage.content._ === 'messageText')
+                    messageContent = lastMessage.content.text.text;
+                else if (
+                    lastMessage.content._ === 'messagePhoto' ||
+                    lastMessage.content._ === 'messageVideo'
+                )
+                    messageContent = lastMessage.content.caption.text;
+
                 if (!this.messageContainsRequiredWord(messageContent)) return;
 
                 const username = `${user.first_name} ${user.last_name}`;
                 const link = await this.getMessageLink(chatId, lastMessage.id);
                 const chatName = await this.getChatName(chatId);
-
-                console.log({
-                    chatName,
-                    username,
-                    messageContent,
-                    link
-                })
+                
+                for (const listener of listeners.contents) {
+                    await sendMessage(
+                        listener.chatId,
+                        `Новое сообщение в чате "${chatName}"\n\n${username}: ${messageContent}\n\n${link}`
+                    );
+                }
             }
         );
     }
