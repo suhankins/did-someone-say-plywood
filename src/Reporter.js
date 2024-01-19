@@ -1,9 +1,15 @@
 import * as tdl from 'tdl';
 import { listeners } from './FileManager.js';
 import createListener from './Listener/createListener.js';
+import Keyboard from './Keyboard.js';
+import Commands, { getCommandByText } from './Commands.js';
 
 /**
  * @typedef {import('./Listener/createListener.js').Listener} Listener
+ */
+
+/**
+ * @typedef {{id: number, chat_id: number, content: { _: string, text: { text: string }}}} Message
  */
 
 export default class Reporter {
@@ -59,26 +65,34 @@ export default class Reporter {
     }
 
     /**
-     * @param {*} message
+     * @param {Message} message
      * @param {Listener} listener
      */
     async handleListener(message, listener) {
-        // TODO: Implement
+        const messageText = message.content.text.text;
+        const requestedCommand = getCommandByText(listener.state, messageText);
+        if (requestedCommand) {
+            requestedCommand.callback(this, message, listener);
+        } else {
+            Commands[listener.state].defaultCallback(this, message, listener).catch((err) => console.error(err));
+        }
     }
 
     /**
-     * @param {{chat_id: number, content: { _: string, text: { text: string }}}} message
+     * @param {Message} message
      */
     async handleNonListener(message) {
         if (message.content._ !== 'messageText') return;
         const text = message.content.text.text;
         const chatId = message.chat_id;
         if (!!text.match(this.password)) {
-            listeners.setContents([
-                ...listeners.contents,
-                createListener(chatId),
-            ]);
-            await this.sendTextMessage(chatId, 'Пароль правильный!');
+            const listener = createListener(chatId);
+            listeners.setContents([...listeners.contents, listener]);
+            await this.replyWithKeyboard(
+                listener,
+                message.id,
+                'Пароль правильный!'
+            );
         } else {
             await this.sendTextMessage(chatId, 'Неправильный пароль.');
         }
@@ -99,6 +113,27 @@ export default class Reporter {
                     text: text,
                 },
             },
+        });
+    }
+
+    /**
+     * @param {Listener} listener
+     * @param {number} messageId
+     * @param {string} text
+     */
+    async replyWithKeyboard(listener, messageId, text) {
+        await this.client.invoke({
+            _: 'sendMessage',
+            chat_id: listener.chatId,
+            reply_to_message_id: messageId,
+            input_message_content: {
+                _: 'inputMessageText',
+                text: {
+                    _: 'formattedText',
+                    text: text,
+                },
+            },
+            reply_markup: Keyboard[listener.state](),
         });
     }
 }

@@ -1,9 +1,9 @@
-import ListenerStates from './ListenerStates.js';
+import ListenerState from './ListenerState.js';
 
 /**
  * @typedef Listener
  * @property {number} chatId
- * @property {ListenerStates} state
+ * @property {ListenerState} state
  */
 
 /**
@@ -13,6 +13,6 @@ import ListenerStates from './ListenerStates.js';
 export default function createListener(chatId) {
     return {
         chatId,
-        state: ListenerStates.default,
+        state: ListenerState.default,
     };
 }
