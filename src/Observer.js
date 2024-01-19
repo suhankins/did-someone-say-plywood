@@ -14,7 +14,7 @@ export default class Observer {
      */
     messageContainsRequiredWord(message) {
         return wordsToLookFor.contents.some(
-            (value) => !!message.toLowerCase().match(value)
+            (value) => !!message.toLowerCase().match(new RegExp(value, 'gi'))
         );
     }
 
