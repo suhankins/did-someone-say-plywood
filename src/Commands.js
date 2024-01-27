@@ -1,7 +1,8 @@
-import { listeners, wordsToLookFor } from './FileManager.js';
+import { allowList, listeners, wordsToLookFor } from './FileManager.js';
 import ListenerState from './Listener/ListenerState.js';
 import {
     getArrayWithReplacedItem,
+    getArrayWithSwitchedItem,
     getArrayWithoutItem,
 } from './utils/arrayUtils.js';
 
@@ -13,6 +14,9 @@ import {
  */
 /**
  * @typedef {import('./types/Message.js').Message} Message
+ */
+/**
+ * @typedef {import('./types/Keyboard.js').Keyboard} Keyboard
  */
 /**
  * @typedef {(reporter: Reporter, message: Message, listener: Listener) => Promise<void>} CommandCallback
@@ -40,16 +44,23 @@ function switchListenerState(listener, state) {
  * @param {Message} message
  * @param {ListenerState} state
  * @param {string} text
+ * @param {any[]} keyboardParams
  */
 async function switchStateAndReplyWithKeyboard(
     reporter,
     listener,
     message,
     state,
-    text
+    text,
+    ...keyboardParams
 ) {
     const newListener = switchListenerState(listener, state);
-    await reporter.replyWithKeyboard(newListener, message.id, text);
+    await reporter.replyWithKeyboard(
+        newListener,
+        message.id,
+        text,
+        ...keyboardParams
+    );
 }
 
 const Commands = {
@@ -82,6 +93,23 @@ const Commands = {
                         message,
                         ListenerState.addWord,
                         'Введите слово (или регулярное выражение)'
+                    );
+                },
+            },
+            {
+                text: 'Чаты',
+                /**
+                 * @type CommandCallback
+                 */
+                callback: async (reporter, message, listener) => {
+                    const chats = await reporter.observer.getAndSaveChats();
+                    await switchStateAndReplyWithKeyboard(
+                        reporter,
+                        listener,
+                        message,
+                        ListenerState.chats,
+                        'Нажмите на чат, чтобы начать или перестать его прослушивать.',
+                        chats
                     );
                 },
             },
@@ -139,6 +167,7 @@ const Commands = {
          * @type CommandCallback
          */
         defaultCallback: async (reporter, message, listener) => {
+            if (message.content._ !== 'messageText') return;
             const newWord = message.content.text.text;
             wordsToLookFor.setContents([...wordsToLookFor.contents, newWord]);
             await switchStateAndReplyWithKeyboard(
@@ -172,6 +201,7 @@ const Commands = {
          * @type CommandCallback
          */
         defaultCallback: async (reporter, message, listener) => {
+            if (message.content._ !== 'messageText') return;
             const word = message.content.text.text;
             const wordIndex = wordsToLookFor.contents.findIndex(
                 (value) => value === word
@@ -192,6 +222,61 @@ const Commands = {
                 listener,
                 message.id,
                 `Слово "${word}" успешно удалено.`
+            );
+        },
+    },
+    [ListenerState.chats]: {
+        commands: [
+            {
+                text: '↩️ Назад',
+                /**
+                 * @type CommandCallback
+                 */
+                callback: async (reporter, message, listener) => {
+                    await switchStateAndReplyWithKeyboard(
+                        reporter,
+                        listener,
+                        message,
+                        ListenerState.default,
+                        'Возращаемся назад'
+                    );
+                },
+            },
+        ],
+        /**
+         * @type CommandCallback
+         */
+        defaultCallback: async (reporter, message, listener) => {
+            if (message.content._ !== 'messageText') return;
+            const chatName = message.content.text.text.replace(/\[.\] /gi, '');
+
+            if (!reporter.observer.chats)
+                await reporter.observer.getAndSaveChats();
+
+            const chat = reporter.observer.chats.find(
+                (chat) => chat.name === chatName
+            );
+            if (!chat) {
+                await reporter.replyWithKeyboard(
+                    listener,
+                    message.id,
+                    'Чат не найден!'
+                );
+                return;
+            }
+
+            allowList.setContents(
+                getArrayWithSwitchedItem(allowList.contents, chat.id)
+            );
+            await reporter.replyWithKeyboard(
+                listener,
+                message.id,
+                `Чат "${chat.name}" ${
+                    allowList.contents.includes(chat.id)
+                        ? 'теперь будет прослушиваться'
+                        : 'больше не будет прослушиваться'
+                }`,
+                reporter.observer.chats
             );
         },
     },

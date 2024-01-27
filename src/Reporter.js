@@ -1,20 +1,25 @@
 import * as tdl from 'tdl';
 import { listeners } from './FileManager.js';
 import createListener from './Listener/createListener.js';
-import Keyboard from './Keyboard.js';
+import Keyboards from './Keyboards.js';
 import Commands, { getCommandByText } from './Commands.js';
 import getListener from './utils/getListener.js';
+import Observer from './Observer.js';
 
 /**
  * @typedef {import('./Listener/createListener.js').Listener} Listener
  */
-
 /**
  * @typedef {import('./types/Message.js').Message} Message
  */
-
 /**
  * @typedef {import('./types/Update.js').Update} Update
+ */
+/**
+ * @typedef {import('./types/Keyboard.js').Keyboard} Keyboard
+ */
+/**
+ * @typedef {import('./types/Chat.js').Chat} Chat
  */
 
 export default class Reporter {
@@ -37,13 +42,21 @@ export default class Reporter {
     password;
 
     /**
+     * @type {Observer}
+     */
+    observer;
+
+    /**
      * @param {tdl.ClientOptions} clientOptions
      * @param {string} token
+     * @param {string} password
+     * @param {Observer} observer
      */
-    constructor(clientOptions, token, password) {
+    constructor(clientOptions, token, password, observer) {
         this.client = tdl.createClient(clientOptions);
         this.token = token;
         this.password = password;
+        this.observer = observer;
     }
 
     async main() {
@@ -126,8 +139,9 @@ export default class Reporter {
      * @param {Listener} listener
      * @param {number} messageId
      * @param {string} text
+     * @param {any[]} keyboardParams
      */
-    async replyWithKeyboard(listener, messageId, text) {
+    async replyWithKeyboard(listener, messageId, text, ...keyboardParams) {
         await this.client
             .invoke({
                 _: 'sendMessage',
@@ -140,7 +154,7 @@ export default class Reporter {
                         text: text,
                     },
                 },
-                reply_markup: Keyboard[listener.state](),
+                reply_markup: Keyboards[listener.state](...keyboardParams),
             })
             .catch((err) => console.error(err));
     }

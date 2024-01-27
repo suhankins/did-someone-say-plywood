@@ -23,3 +23,16 @@ export function getArrayWithReplacedItem(array, item, replacement) {
 export function getArrayWithoutItem(array, item) {
     return array.toSpliced(getIndex(array, item), 1);
 }
+
+/**
+ * Switches item: if it was in array, it will be removed, and if it wasn't, it will be added.
+ * @param {Array} array
+ * @param {*} item
+ */
+export function getArrayWithSwitchedItem(array, item) {
+    const itemIndex = getIndex(array, item);
+    if (itemIndex === -1) {
+        return [...array, item];
+    }
+    return getArrayWithoutItem(array, item);
+}

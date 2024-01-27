@@ -12,13 +12,12 @@ const clientOptions = {
 const token = process.env.BOT_TOKEN;
 const password = process.env.PASSWORD;
 
-new Observer({
+const observer = new Observer({
     ...clientOptions,
     databaseDirectory: 'observer_db',
     filesDirectory: 'observer_files',
-})
-    .main()
-    .catch(console.error);
+});
+observer.main().catch(console.error);
 
 new Reporter(
     {
@@ -27,7 +26,8 @@ new Reporter(
         filesDirectory: 'reporter_files',
     },
     token,
-    password
+    password,
+    observer
 )
     .main()
     .catch(console.error);

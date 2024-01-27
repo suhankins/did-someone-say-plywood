@@ -10,3 +10,4 @@ node_modules
 listeners.json
 wordsToLookFor.json
 *.exe
+allowList.json

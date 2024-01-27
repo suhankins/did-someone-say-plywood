@@ -10,6 +10,9 @@ import sendMessage from './utils/sendMessage.js';
 /**
  * @typedef {import('./types/User.js').User} User
  */
+/**
+ * @typedef {import('./types/Chat.js').Chat} Chat
+ */
 
 export default class Observer {
     /**
@@ -17,6 +20,11 @@ export default class Observer {
      * @private
      */
     client;
+
+    /**
+     * @type {(Chat[] | undefined)}
+     */
+    chats;
 
     /**
      * @param {string} message
@@ -37,21 +45,6 @@ export default class Observer {
 
     /**
      * @param {number} chatId
-     * @returns {Promise<string>}
-     * @private
-     */
-    async getChatName(chatId) {
-        return await this.client
-            .invoke({
-                _: 'getChat',
-                chat_id: chatId,
-            })
-            .then((chatObject) => chatObject.title)
-            .catch(() => 'Не получилось получить название чата');
-    }
-
-    /**
-     * @param {number} chatId
      * @param {number} messageId
      * @returns {Promise<string>}
      * @private
@@ -65,6 +58,46 @@ export default class Observer {
             })
             .then((linkObject) => linkObject.link)
             .catch(() => 'Не получилось получить ссылку');
+    }
+
+    /**
+     * @param {number} chatId
+     * @returns {Promise<string>}
+     */
+    async getChatName(chatId) {
+        return await this.client
+            .invoke({
+                _: 'getChat',
+                chat_id: chatId,
+            })
+            .then((chatObject) => chatObject.title)
+            .catch(() => 'Не получилось получить название чата');
+    }
+
+    /**
+     * @returns {Promise<Chat[]>}
+     */
+    async getAndSaveChats() {
+        /**
+         * @type {number[]}
+         */
+        const chatIdList = await this.client
+            .invoke({
+                _: 'getChats',
+                limit: 99,
+            })
+            .then((chatsObject) => chatsObject.chat_ids.toReversed())
+            .catch(() => []);
+        // Negative Chat ID means it's a group or a channel
+        const groupChatIdList = chatIdList.filter((id) => id < 0);
+        const names = await Promise.all(
+            groupChatIdList.map((chatId) => this.getChatName(chatId))
+        ).catch(() => []);
+        this.chats = names.map((name, index) => ({
+            name,
+            id: groupChatIdList[index],
+        }));
+        return this.chats;
     }
 
     /**
