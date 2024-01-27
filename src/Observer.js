@@ -1,5 +1,5 @@
 import * as tdl from 'tdl';
-import { listeners, wordsToLookFor } from './FileManager.js';
+import { allowList, listeners, wordsToLookFor } from './FileManager.js';
 import getListener from './utils/getListener.js';
 import isBot from './utils/isBot.js';
 import sendMessage from './utils/sendMessage.js';
@@ -132,7 +132,7 @@ export default class Observer {
                 const lastMessage = update.message;
 
                 const chatId = lastMessage.chat_id;
-                if (!!getListener(chatId)) return;
+                if (!allowList.contents.includes(chatId)) return;
 
                 const userId = lastMessage.sender_id.user_id;
                 if (!!getListener(userId)) return;
