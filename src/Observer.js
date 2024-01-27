@@ -7,7 +7,6 @@ import sendMessage from './utils/sendMessage.js';
 /**
  * @typedef {import('./types/Update.js').Update} Update
  */
-
 /**
  * @typedef {import('./types/User.js').User} User
  */
@@ -81,7 +80,7 @@ export default class Observer {
             })
             .catch(() => ({
                 id: 0,
-                first_name: 'Не получилось получить имя пользователя',
+                first_name: '',
                 last_name: '',
                 type: { _: '' },
             }));
@@ -120,14 +119,18 @@ export default class Observer {
 
                 if (!this.messageContainsRequiredWord(messageContent)) return;
 
-                const username = `${user.first_name} ${user.last_name}`;
+                const username =
+                    user.id !== 0
+                        ? `${user.first_name} ${user.last_name}: `
+                        : '';
+
                 const link = await this.getMessageLink(chatId, lastMessage.id);
                 const chatName = await this.getChatName(chatId);
-                
+
                 for (const listener of listeners.contents) {
                     await sendMessage(
                         listener.chatId,
-                        `Новое сообщение в чате "${chatName}"\n\n${username}: ${messageContent}\n\n${link}`
+                        `Новое сообщение в чате "${chatName}"\n\n${username}${messageContent}\n\n${link}`
                     );
                 }
             }
