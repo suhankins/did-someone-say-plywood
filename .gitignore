@@ -5,8 +5,8 @@ observer_files
 reporter_db
 reporter_files
 .env
+.env.test
 node_modules
 listeners.json
 wordsToLookFor.json
 *.exe
-*.bat
